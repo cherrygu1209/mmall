@@ -46,8 +46,37 @@ public class CategoryManageController {
         }
         if(iUserService.checkAdminRole(user).isSuccess()){
             //是管理员
-            //增加处理分类的逻辑
             return iCategoryService.updateCategoryName(categoryId,categoryName);
+        }
+        return ServerResponse.createByErrorMessage("No right");
+    }
+
+    @RequestMapping("get_category.do")
+    @ResponseBody
+    public ServerResponse getChildrenParallelCategory(HttpSession session, @RequestParam(value = "parentId", defaultValue = "0") Integer categoryId){
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(user == null){
+            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),"User not login");
+        }
+        if(iUserService.checkAdminRole(user).isSuccess()){
+            //是管理员
+            //查询子节点Category信息，并且不递归，保持平级
+            return iCategoryService.getChildrenParallelCategory(categoryId);
+        }
+        return ServerResponse.createByErrorMessage("No right");
+    }
+
+    @RequestMapping("get_deep_category.do")
+    @ResponseBody
+    public ServerResponse getCategoryAndDeepChildrenCategory(HttpSession session, @RequestParam(value = "parentId", defaultValue = "0") Integer categoryId){
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(user == null){
+            return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),"User not login");
+        }
+        if(iUserService.checkAdminRole(user).isSuccess()){
+            //是管理员
+            //查询当前Category的id和递归子节点id
+            return iCategoryService.selectCategoryAndChildrenById(categoryId);
         }
         return ServerResponse.createByErrorMessage("No right");
     }
