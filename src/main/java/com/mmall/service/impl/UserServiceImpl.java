@@ -2,6 +2,7 @@ package com.mmall.service.impl;
 
 import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
+import com.mmall.common.TokenCache;
 import com.mmall.dao.UserMapper;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
@@ -10,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service("iUserService")
 public class UserServiceImpl implements IUserService {
@@ -77,5 +80,28 @@ public class UserServiceImpl implements IUserService {
             return ServerResponse.createByErrorMessage("Argument Error");
         }
         return ServerResponse.createBySuccessMessage("Valid success");
+    }
+
+    public ServerResponse<String> selectQuestion(String username){
+        ServerResponse<String> validResponse = this.checkValid(username,Const.USERNAME);
+        if(validResponse.isSuccess()){
+            //user does not exist
+            return ServerResponse.createByErrorMessage("User does not exist");
+        }
+        String question = userMapper.selectQuestionByUsername(username);
+        if(StringUtils.isNoneBlank(question)){
+            return ServerResponse.createBySuccessMessage(question);
+        }
+        return ServerResponse.createByErrorMessage("Question is blank");
+    }
+
+    public ServerResponse<String> checkAnswer(String username, String question, String answer){
+        int resultCount = userMapper.checkAnswer(username,question,answer);
+        if(resultCount > 0){
+            String forgetToken = UUID.randomUUID().toString();
+            TokenCache.setKey("token_" + username, forgetToken);
+            return ServerResponse.createBySuccess(forgetToken);
+        }
+        return ServerResponse.createByErrorMessage("Answer is wrong");
     }
 }
